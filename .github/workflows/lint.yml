@@ -45,7 +45,7 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.SERVICE_TOKEN }}
     - name: Lint Commit Message
-      uses: wagoid/commitlint-github-action@v5
+      uses: wagoid/commitlint-github-action@v6
     - name: Lint Code Base
       uses: github/super-linter/slim@v4
       # Slim image does not include linters: rust, dotenv, armtk, pwsh, c#
