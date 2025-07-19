@@ -38,7 +38,7 @@ jobs:
         token: ${{ secrets.SERVICE_TOKEN }}
     - name: Compute new version number
       id: tag_version
-      uses: mathieudutour/github-tag-action@v6.1
+      uses: mathieudutour/github-tag-action@v6.2
       with:
         github_token: ${{ secrets.SERVICE_TOKEN }}
         release_branches: ${{ inputs.default_branch }}
