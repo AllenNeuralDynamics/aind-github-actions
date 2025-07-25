@@ -47,7 +47,7 @@ jobs:
     - name: Lint Commit Message
       uses: wagoid/commitlint-github-action@v6
     - name: Lint Code Base
-      uses: github/super-linter/slim@v4
+      uses: github/super-linter/slim@v7
       # Slim image does not include linters: rust, dotenv, armtk, pwsh, c#
       env:
         GITHUB_TOKEN: ${{ secrets.SERVICE_TOKEN }}
