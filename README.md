@@ -5,7 +5,9 @@ aind-github-actions
 
 ## This repository is for workflows that may be reused in other workflows and repositories.
 
-GitHub actions workflows are found in .github/workflows.
+GitHub actions workflows are found in .github/workflows. Any workflows that have
+an underscore at the start of their name are NOT part of the API, and are
+internal to this repository.
 
 Example calling workflows are in `examples/`
 
