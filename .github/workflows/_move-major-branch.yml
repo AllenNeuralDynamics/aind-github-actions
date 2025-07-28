@@ -1,0 +1,88 @@
+# This is NOT a reusable workflow, and is not part of the public API.
+#
+# This workflow is triggered by a push to a version tag (e.g. v1.2.3) or
+# manually via workflow_dispatch. It moves the commit pointed to by the tag to
+# a major branch (e.g. v1, v2, etc.). For v0.x.y releases, it creates branches
+# like v0.x (e.g. v0.3 for v0.3.5). If the major branch already exists, it
+# will reset it to the commit of the tag. If it does not exist, it will create
+# the branch at the commit of the tag.
+name: "Move/update major branch"
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to process (e.g. v3.2.1 creates v3 branch, v0.3.5 creates v0.3 branch)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: move-major-branch
+  cancel-in-progress: false
+
+jobs:
+  move-major-branch:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Check out repo so we can move branches
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SERVICE_TOKEN }}
+
+      # 2) Work out which tag & commit we’re supposed to handle
+      - name: Determine tag & commit
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+            # Make sure the tag exists locally
+            if ! git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+              echo "::error::Tag '${TAG}' not found in origin; did you push it?"
+              exit 1
+            fi
+            COMMIT=$(git rev-parse "refs/tags/${TAG}^{commit}")
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            COMMIT="${GITHUB_SHA}"
+          fi
+
+          # Extract the target branch based on semver, handling v0.x.y specially
+          if [[ "${TAG}" =~ ^v0\. ]]; then
+            # For v0.x.y releases, use v0.x as the target branch
+            TARGET_BRANCH=$(echo "${TAG}" | cut -d. -f1,2)  # e.g. v0.3.5 -> v0.3
+          else
+            # For v1.x.y and above, use just the major version
+            TARGET_BRANCH="${TAG%%.*}"                      # e.g. v1.2.3 -> v1
+          fi
+
+          echo "tag=${TAG}"       >>"$GITHUB_OUTPUT"
+          echo "commit=${COMMIT}" >>"$GITHUB_OUTPUT"
+          echo "target_branch=${TARGET_BRANCH}"   >>"$GITHUB_OUTPUT"
+
+
+      # 3) Fast‑forward or create the major branch
+      - name: Move or create major branch
+        env:
+          TARGET_BRANCH:  ${{ steps.vars.outputs.target_branch }}
+          COMMIT: ${{ steps.vars.outputs.commit }}
+        run: |
+          set -euo pipefail
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin "$TARGET_BRANCH" >/dev/null; then
+            echo "Resetting branch $TARGET_BRANCH to $COMMIT"
+            git branch -f "$TARGET_BRANCH" "$COMMIT"
+          else
+            echo "Creating new branch $TARGET_BRANCH at $COMMIT"
+            git branch "$TARGET_BRANCH" "$COMMIT"
+          fi
+          git push origin "$COMMIT:refs/heads/$TARGET_BRANCH" --force-with-lease
