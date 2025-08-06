@@ -13,9 +13,9 @@ on:
         default: main
         required: false
         type: string
-    # secrets:
-    #   SERVICE_TOKEN:
-    #     required: true
+    secrets:
+      SERVICE_TOKEN:
+        required: true
 
 jobs:
   lint:
