@@ -20,8 +20,6 @@ on:
 jobs:
   lint:
     uses: AllenNeuralDynamics/aind-github-actions/.github/workflows/lint.yml@main
-    with:
-      default_branch: ${{ inputs.default_branch }}
     secrets:
       SERVICE_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required
 
