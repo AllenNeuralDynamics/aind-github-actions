@@ -3,7 +3,7 @@ name: Update Badges
 on:
   workflow_call:
     inputs:
-      default_branch:
+      default-branch:
         description: 'Default branch name'
         default: main
         required: false
