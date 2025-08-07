@@ -3,97 +3,78 @@ name: Publish
 on:
   workflow_call:
     inputs:
-      default-branch:
-        description: "Default branch name"
-        default: main
-        required: false
-        type: string
       python-version:
         description: "Python version for build"
         required: false
         type: string
-        default: "3.10"
+        default: "3.13"
+      tag-name:
+        description: "Git tag to release"
+        required: true
+        type: string
       publish-to-pypi:
         description: "Whether to publish to PyPI (true/false)"
         required: false
         type: boolean
         default: false
-      dockerfile-context:
-        description: "Relative path to Dockerfile"
-        required: false
-        type: string
-        default: "."
-      publish-docker:
-        description: "Whether to publish Docker image (true/false)"
-        required: false
-        type: boolean
-        default: false
     secrets:
-      GITHUB_TOKEN:
+      repo-token:
         description: "GitHub token for release creation"
         required: true
       pypi-token:
         description: "PyPI API token"
         required: false
 
+permissions:
+  contents: write
+
 jobs:
-  publish-to-pypi:
-    name: Publish to PyPI
-    if: ${{ inputs.publish-to-pypi }}
-    runs-on: ubuntu-22.04
+  build-release-publish:
+    runs-on: ubuntu-latest
+    # only run on a tag push, or on a manual dispatch *where* the user has
+    # selected a tag ref (i.e. github.ref starts with refs/tags/)
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.default_branch }}
+          # on push this is already the tag ref; on dispatch you must choose
+          # the tag in the UI so github.ref is the tag
+          ref: ${{ github.ref }}
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install --upgrade setuptools wheel twine build
-          python -m build
-          twine check dist/*
-      - name: Publish on PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.12
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          password: ${{ secrets.pypi-token }}
-  publish-docker:
-    name: Publish Docker image
-    if: ${{ inputs.publish-docker }}
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+          python-version: ${{ inputs.python-version }}
+          enable-cache: true
+      - name: Install project
+        run: uv sync
+      - name: Build
+        run: uv build
+      - name: Verify artifacts
+        run: ls -la dist/
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
         with:
-          ref: ${{ inputs.default_branch }}
-      - name: Compute new docker image tag
+          tag_name: ${{ inputs.tag-name }}
+          name: Release ${{ inputs.tag-name }}
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+        env:
+          GITHUB_TOKEN: ${{ secrets.repo-token }}
+      - name: Publish to PyPI
+        if: ${{ inputs.publish-to-pypi }}
+        env:
+          pypi_token: ${{ secrets.pypi-token }}
         run: |
-          if [ "${{ inputs.default_branch }}" == "main" ]; then
-            pkg_name=$(grep -P 'version = \{attr = .*\}' pyproject.toml | grep -oP '\w+.__version__')
-            init_file="./src/${pkg_name//.__version__}/__init__.py"
-            pkg_version=$(grep -Po '[0-9]+\.[0-9]+\.[0-9]+' "$init_file")
-            echo "docker_tag=$pkg_version" >> "$GITHUB_ENV"
-            echo " branch_tag=latest" >> "$GITHUB_ENV"
+          if [ -z "$pypi_token" ]; then
+            echo "No PyPI token provided, skipping publish."
           else
-            echo "sha_short=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
-            echo "branch=$(echo ${GITHUB_REF_NAME})" >> "$GITHUB_ENV"
-            echo "docker_tag=$(echo ${GITHUB_REF_NAME})-$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
-            echo "branch_tag=$(echo ${GITHUB_REF_NAME})" >> "$GITHUB_ENV"
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Github Packages
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push image to GitHub Container Registry
-        uses: docker/build-push-action@v3
-        with:
-          context: ${{ inputs.dockerfile-context }}
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ env.docker_tag }}
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ env.branch_tag }}
+            uv publish --token "$pypi_token"
+          fi
