@@ -19,8 +19,9 @@ on:
         type: string
       branch-tag:
         description: "Branch tag to use for Docker image"
-        required: true
+        required: false
         type: string
+        default: "latest"
     secrets:
       repo-token:
         description: "GitHub token for release creation"
@@ -35,6 +36,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.default_branch }}
+      - name: Set branch tag
+        run: |
+          if [ "${{ inputs.default_branch }}" == "main" ]; then
+            echo "branch_tag=latest" >> $GITHUB_ENV
+          elif [ "${{ inputs.default_branch }}" == "dev" ]; then
+            echo "branch_tag=dev" >> $GITHUB_ENV
+          else
+            echo "branch_tag=${{ inputs.branch_tag }}" >> $GITHUB_ENV
+          fi
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to Github Packages
@@ -50,4 +60,4 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.docker_tag }}
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.branch_tag }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ env.branch_tag }}
