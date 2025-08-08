@@ -27,8 +27,6 @@ jobs:
         ref: ${{ inputs.default-branch }}
         fetch-depth: 0
         token: ${{ secrets.SERVICE_TOKEN }}
-    - name: Pull latest changes
-      run: git pull origin ${{ inputs.default-branch }}
     - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
@@ -67,6 +65,8 @@ jobs:
             new_coverage_badge="coverage-$coverage_val%25-yellow"
         fi
         sed -i "s/$coverage_badge/$new_coverage_badge/g" README.md
+    - name: Pull latest changes
+      run: git pull origin ${{ inputs.default-branch }}
     - name: Commit changes
       uses: EndBug/add-and-commit@v9
       with:
