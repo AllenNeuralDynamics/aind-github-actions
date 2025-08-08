@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
-    - name: Pull latest changes
-      run: git pull origin ${{ inputs.default-branch }}
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.default-branch }}
         fetch-depth: 0
         token: ${{ secrets.SERVICE_TOKEN }}
+    - name: Pull latest changes
+      run: git pull origin ${{ inputs.default-branch }}
     - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
