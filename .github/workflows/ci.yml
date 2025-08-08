@@ -1,9 +1,4 @@
-# Call this workflow like this:
-# jobs:
-#   ci:
-#     uses: AllenNeuralDynamics/aind-github-actions/.github/workflows/ci.yml@main
-#     with:
-#       python-versions: '["3.8","3.9", "3.10", "3.11"]'
+name: CI
 
 on:
   workflow_call:
