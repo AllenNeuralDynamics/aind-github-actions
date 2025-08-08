@@ -24,7 +24,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.default_branch }}
+        ref: ${{ inputs.default-branch }}
         fetch-depth: 0
         token: ${{ secrets.SERVICE_TOKEN }}
     - name: Set up Python 3.10
