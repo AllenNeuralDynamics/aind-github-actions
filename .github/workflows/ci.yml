@@ -12,9 +12,6 @@ jobs:
   ci:
     name: Run CI Tasks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ${{ fromJson(inputs.python-version) }}
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
