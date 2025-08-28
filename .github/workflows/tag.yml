@@ -60,6 +60,13 @@ jobs:
           sed -i --debug --expression='s/^version: .*/version: "v${{ env.VERSION }}"/' CITATION.cff
           sed -i --debug --expression="s/^date-released: .*/date-released: $(date +%Y-%m-%d)/" CITATION.cff
         fi
+    - name: Set files to commit
+      run: |
+        files_to_add="${{ env.VERSION_FILE }}"
+        if [ -f CITATION.cff ]; then
+          files_to_add="$files_to_add CITATION.cff"
+        fi
+        echo "FILES_TO_ADD=$files_to_add" >> "$GITHUB_ENV"
     - name: Set output
       id: output_version
       run: echo "new_version=${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
@@ -68,7 +75,7 @@ jobs:
       with:
         default_author: github_actions
         message: "ci: version bump [skip actions]"
-        add: ${{ env.VERSION_FILE }} CITATION.cff
+        add: ${{ env.FILES_TO_ADD }}
     - name: Update tag
       run: |
         git tag v${{ env.VERSION }}
