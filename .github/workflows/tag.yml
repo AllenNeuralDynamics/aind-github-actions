@@ -68,7 +68,7 @@ jobs:
       with:
         default_author: github_actions
         message: "ci: version bump [skip actions]"
-        add: ${{ env.VERSION_FILE }}
+        add: ${{ env.VERSION_FILE }} CITATION.cff
     - name: Update tag
       run: |
         git tag v${{ env.VERSION }}
