@@ -54,6 +54,12 @@ jobs:
       run: |
         grep "__version__" "$VERSION_FILE"
         sed -i --debug --expression="s|__version__.*|__version__ = \"${{ env.VERSION }}\"|" "$VERSION_FILE"
+    - name: Update version in CITATION.cff file
+      run: |
+        if [ -f CITATION.cff ]; then
+          sed -i --debug --expression='s/^version: .*/version: "v${{ env.VERSION }}"/' CITATION.cff
+          sed -i --debug --expression="s/^date-released: .*/date-released: $(date +%Y-%m-%d)/" CITATION.cff
+        fi
     - name: Set output
       id: output_version
       run: echo "new_version=${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
