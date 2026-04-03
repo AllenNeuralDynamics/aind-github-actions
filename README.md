@@ -1,3 +1,11 @@
+# DEPRECATION NOTICE!
+We will be deprecating this library and replacing it with:
+https://github.com/AllenNeuralDynamics/.github
+
+Please update your workflows accordingly.
+
+We will archive this repository on June 1st, 2026.
+
 # AIND GitHub Actions (Reusable Workflows)
 aind-github-actions
 
