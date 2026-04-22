@@ -22,6 +22,11 @@ on:
         required: false
         type: string
         default: "tests"
+      run-mypy:
+        description: "Whether to run mypy for typing checks (true/false)"
+        required: false
+        type: boolean
+        default: false
     secrets:
       repo-token:
         description: GitHub token for checkout/PR operations
@@ -39,9 +44,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python-version }}
       - name: Install uv
@@ -55,6 +60,9 @@ jobs:
         run: |
           uv run --frozen ruff format --check --diff .
           uv run --frozen ruff check --output-format=github .
+      - name: Mypy (typing check)
+        if: ${{ inputs.run-mypy }}
+        run: uv run --frozen mypy
       - name: Interrogate (docstring coverage)
         run: uv run --frozen interrogate -v
       - name: Codespell (typo checker)

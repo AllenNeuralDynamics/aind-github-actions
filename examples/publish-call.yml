@@ -3,7 +3,7 @@
 # (indicating a semantic versioning tag) or manually via workflow_dispatch.
 # It creates a release and uploads the package to PyPI.
 # * The concurrency group ensures that only one release job runs at a time.
-# * This calling workflow should be placed in `.github/workflows/publish-call.yml`
+# * This workflow should be placed in `.github/workflows/publish.yml`
 # of your repository.
 # * The workflow uses a service token for authentication to PyPI.
 name: "Release"
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   run-release:
-    uses: AllenNeuralDynamics/aind-github-actions.github/workflows/publish.yml@main
+    uses: AllenNeuralDynamics/aind-github-actions/.github/workflows/publish.yml@main
     with:
       tag-name: ${{ github.ref_name }}
       python-version: "3.13"

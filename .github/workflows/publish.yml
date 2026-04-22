@@ -36,14 +36,14 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # on push this is already the tag ref; on dispatch you must choose
           # the tag in the UI so github.ref is the tag
           ref: ${{ github.ref }}
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python-version }}
       - name: Install uv

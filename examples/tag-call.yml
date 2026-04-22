@@ -1,0 +1,21 @@
+# Example workflow to use the reusable tag workflow
+# This workflow is triggered after CI tests pass to create a new Git tag
+# It updates the version number in the codebase and creates a new Git tag.
+# * This workflow should be placed in `.github/workflows/tag_and_publish.yml`
+# of your repository.
+# * The workflow uses a service token for authentication to commit changes.
+
+name: Tag
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  bump-version:
+    uses: AllenNeuralDynamics/aind-github-actions/.github/workflows/tag.yml@main
+    with:
+      default_branch: main # optional, default: main
+    secrets:
+      SERVICE_TOKEN: ${{ secrets.SERVICE_TOKEN }} # required
